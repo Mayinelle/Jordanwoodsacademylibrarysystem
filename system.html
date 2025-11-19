@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JORDAN WOODS ACADEMY</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #e8f5e9;
+        color: #1b5e20;
+        padding: 20px;
+    }
+
+    h2 {
+        text-align: center;
+        background-color: #2e7d32;
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+    }
+
+    table {
+        width: 80%;
+        margin: 20px auto;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        border: 1px solid #2e7d32;
+        padding: 10px;
+        text-align: left;
+    }
+
+    th {
+        background-color: #388e3c;
+        color: white;
+    }
+
+    .historyBox {
+        width: 80%;
+        margin: 20px auto;
+        padding: 15px;
+        border: 2px solid #2e7d32;
+        border-radius: 10px;
+        background: #f1f8f2;
+    }
+
+    button {
+        padding: 5px 10px;
+        border: none;
+        border-radius: 5px;
+        color: white;
+        cursor: pointer;
+    }
+
+    .borrow { background-color: #4caf50; }
+    .return { background-color: #f44336; }
+</style>
+</head>
+<body>
+
+<h2>Student Library Management System</h2>
+
+<label>Student Name:</label>
+<input type="text" id="studentName" readonly><br><br>
+
+<label>LRN / School ID:</label>
+<input type="text" id="studentLRN" readonly><br><br>
+
+<label>Adviser:</label>
+<input type="text" id="studentAdviser" readonly><br><br>
+
+<label>Date Today:</label>
+<input type="text" id="currentDate" readonly><br><br>
+
+<label>Time Now:</label>
+<input type="text" id="currentTime" readonly><br><br>
+
+<h3>Books Available</h3>
+
+<table id="booksTable">
+    <tr>
+        <th>Book Title</th>
+        <th>Status</th>
+        <th>Action</th>
+    </tr>
+</table>
+
+<h3>Student Borrow History</h3>
+<div id="history" class="historyBox">
+    Scan QR to show student history.
+</div>
+
+<script>
+    // -------------------------------
+    // STUDENT DATA
+    // -------------------------------
+    const students = [
+        { name: "Juan Dela Cruz", lrn: "1234567890", adviser: "Mrs. Santos" },
+        { name: "Maria Santos", lrn: "0987654321", adviser: "Mr. Reyes" },
+        { name: "Luna Dara", lrn: "1122334455", adviser: "Ms. Lopez" }
+    ];
+
+    // -------------------------------
+    // GET SCANNED STUDENT FROM QR
+    // -------------------------------
+    function getStudentFromQR() {
+        // Example: QR contains ?lrn=1234567890
+        const params = new URLSearchParams(window.location.search);
+        return params.get("lrn"); 
+    }
+
+    function fillStudentInfo(lrn) {
+        const student = students.find(s => s.lrn === lrn);
+        if(student) {
+            document.getElementById("studentName").value = student.name;
+            document.getElementById("studentLRN").value = student.lrn;
+            document.getElementById("studentAdviser").value = student.adviser;
+            showStudentHistory(student.name);
+        }
+    }
+
+    // -------------------------------
+    // BOOK LIST
+    // -------------------------------
+    let books = [
+        { title: "Math 101", status: "Available" },
+        { title: "Science Basics", status: "Available" },
+        { title: "English Literature", status: "Available" },
+        { title: "History of the World", status: "Available" },
+        { title: "Philippine History", status: "Available" },
+        { title: "Biology for Beginners", status: "Available" },
+        { title: "Chemistry Fundamentals", status: "Available" },
+        { title: "Physics Essentials", status: "Available" },
+        { title: "Algebra II", status: "Available" },
+        { title: "Geometry Basics", status: "Available" },
+        { title: "Computer Programming 1", status: "Available" },
+        { title: "Web Development Guide", status: "Available" },
+        { title: "Introduction to ICT", status: "Available" },
+        { title: "MAPEH Comprehensive Book", status: "Available" },
+        { title: "Economics 101", status: "Available" },
+        { title: "Business Management", status: "Available" },
+        { title: "Entrepreneurship Handbook", status: "Available" },
+        { title: "Earth Science", status: "Available" },
+        { title: "Environmental Science", status: "Available" },
+        { title: "Health Education", status: "Available" },
+        { title: "Values Education", status: "Available" },
+        { title: "Christian Living", status: "Available" },
+        { title: "Filipino: Wika at Panitikan", status: "Available" }
+    ];
+
+    // -------------------------------
+    // BORROW HISTORY
+    // -------------------------------
+    let borrowHistory = JSON.parse(localStorage.getItem("history")) || {};
+
+    function saveHistory() {
+        localStorage.setItem("history", JSON.stringify(borrowHistory));
+    }
+
+    function showStudentHistory(studentName) {
+        const box = document.getElementById("history");
+
+        if (!borrowHistory[studentName] || borrowHistory[studentName].length === 0) {
+            box.innerHTML = `<b>${studentName}</b> has no borrow records.`;
+            return;
+        }
+
+        let html = `<b>${studentName}'s Borrow History:</b><br><br>`;
+        borrowHistory[studentName].forEach(rec => {
+            html += `📘 <b>${rec.book}</b> — Borrowed on ${rec.date} at ${rec.time} — Adviser: ${rec.adviser}<br>`;
+        });
+
+        box.innerHTML = html;
+    }
+
+    // -------------------------------
+    // RENDER BOOKS
+    // -------------------------------
+    function renderBooks() {
+        const table = document.getElementById("booksTable");
+        table.innerHTML = `
+            <tr>
+                <th>Book Title</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        `;
+
+        books.forEach((book, index) => {
+            let row = table.insertRow();
+            row.insertCell(0).innerText = book.title;
+            row.insertCell(1).innerText = book.status;
+
+            let actionCell = row.insertCell(2);
+
+            if (book.status === "Available") {
+                let btn = document.createElement("button");
+                btn.className = "borrow";
+                btn.innerText = "Borrow";
+                btn.onclick = () => borrowBook(index);
+                actionCell.appendChild(btn);
+            } else {
+                let btn = document.createElement("button");
+                btn.className = "return";
+                btn.innerText = "Return";
+                btn.onclick = () => returnBook(index);
+                actionCell.appendChild(btn);
+            }
+        });
+    }
+
+    // -------------------------------
+    // BORROW BOOK
+    // -------------------------------
+    function borrowBook(index) {
+        const studentName = document.getElementById("studentName").value;
+        const lrn = document.getElementById("studentLRN").value;
+        const adviser = document.getElementById("studentAdviser").value;
+
+        if (studentName === "") {
+            alert("Scan student QR first!");
+            return;
+        }
+
+        let date = document.getElementById("currentDate").value;
+        let time = document.getElementById("currentTime").value;
+
+        books[index].status = `Borrowed by ${studentName}`;
+
+        if (!borrowHistory[studentName]) borrowHistory[studentName] = [];
+
+        borrowHistory[studentName].push({
+            book: books[index].title,
+            date: date,
+            time: time,
+            lrn: lrn,
+            adviser: adviser
+        });
+
+        saveHistory();
+        showStudentHistory(studentName);
+        renderBooks();
+    }
+
+    // -------------------------------
+    // RETURN BOOK
+    // -------------------------------
+    function returnBook(index) {
+        books[index].status = "Available";
+        renderBooks();
+    }
+
+    // -------------------------------
+    // AUTO-FILL DATE, TIME, AND STUDENT INFO ON SCAN
+    // -------------------------------
+    window.onload = function () {
+        const scannedLRN = getStudentFromQR();
+        if(scannedLRN) fillStudentInfo(scannedLRN);
+
+        const now = new Date();
+        document.getElementById("currentDate").value =
+            now.toLocaleDateString("en-CA");
+        document.getElementById("currentTime").value =
+            now.toLocaleTimeString("en-US", { hour12: false });
+
+        renderBooks();
+    };
+</script>
+
+</body>
+</html>
+<div id="qrcode"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+    const student = {
+        name: "Janelle May Jaso Jaso",
+        lrn: "136524131101",
+        section: "12 ICT Walnut",
+        adviser: "Sir Hisham"
+    };
+
+    const qrURL = `https://yourwebsite.com/library.html?lrn=${student.lrn}`;
+
+    new QRCode(document.getElementById("qrcode"), {
+        text: qrURL,
+        width: 200,
+        height: 200,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+    });
+</script>
